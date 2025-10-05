@@ -1,4 +1,6 @@
 pub mod read_write;
+pub mod read_heavy;
+pub mod read_only;
 
 use crate::database::Database;
 use crate::generator::{ByteGen, KVSizeGen};

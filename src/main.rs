@@ -35,6 +35,7 @@ enum WorkloadType {
 enum DatabaseType {
     MemBtree,
     Redb,
+    Sled,
 }
 
 fn main() -> Result<()> {
@@ -53,8 +54,8 @@ fn main() -> Result<()> {
 fn get_wl(wl: WorkloadType) -> Box<dyn Workload> {
     match wl {
         ReadWrite => Box::new(workload::read_write::ReadWrite),
-        WorkloadType::ReadHeavy => todo!(),
-        WorkloadType::ReadOnly => todo!(),
+        WorkloadType::ReadHeavy => Box::new(workload::read_heavy::ReadHeavy),
+        WorkloadType::ReadOnly => Box::new(workload::read_only::ReadOnly),
         WorkloadType::RangeScan => todo!(),
     }
 }

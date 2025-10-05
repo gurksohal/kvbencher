@@ -3,7 +3,7 @@ use tempfile::NamedTempFile;
 
 static TABLE: TableDefinition<&[u8], &[u8]> = TableDefinition::new("data");
 pub struct Redb {
-    f_: NamedTempFile,
+    _f: NamedTempFile,
     db: Database,
 }
 
@@ -11,7 +11,7 @@ impl Redb {
     pub fn new() -> Self {
         let f = NamedTempFile::new().unwrap();
         let db = Database::create(f.path()).unwrap();
-        Redb { f_: f, db }
+        Redb { _f: f, db }
     }
 }
 

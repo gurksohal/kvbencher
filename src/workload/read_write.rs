@@ -14,7 +14,7 @@ impl WorkloadConfig for ReadWrite {
     }
 
     fn get_operation_count(&self) -> u64 {
-        5_000
+        8_000
     }
 
     fn get_read_percent(&self) -> f64 {
