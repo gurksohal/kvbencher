@@ -1,5 +1,5 @@
+use crate::workload::WorkloadConfig;
 use std::ops::Range;
-use crate::workload::{WorkloadConfig};
 
 #[derive(Default)]
 pub struct ReadWrite;
@@ -22,7 +22,7 @@ impl WorkloadConfig for ReadWrite {
     }
 
     fn get_write_percent(&self) -> f64 {
-         1.0 - self.get_read_percent()
+        1.0 - self.get_read_percent()
     }
 
     fn get_key_size(&self) -> u64 {

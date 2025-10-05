@@ -2,12 +2,12 @@ mod mem_btree;
 mod redb;
 mod sled;
 
+use crate::DatabaseType;
+use crate::database::mem_btree::MemBTree;
 use crate::database::redb::Redb;
+use crate::database::sled::Sled;
 use anyhow::Result;
 use std::sync::Arc;
-use crate::database::mem_btree::MemBTree;
-use crate::database::sled::Sled;
-use crate::DatabaseType;
 
 pub trait Database: Send + Sync {
     fn init(&self) -> Result<()>;

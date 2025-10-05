@@ -1,5 +1,5 @@
-use std::ops::Range;
 use crate::workload::WorkloadConfig;
+use std::ops::Range;
 
 #[derive(Default)]
 pub struct ReadOnly;

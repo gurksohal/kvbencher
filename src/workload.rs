@@ -1,13 +1,13 @@
-pub mod read_write;
 pub mod read_heavy;
 pub mod read_only;
+pub mod read_write;
 
 use crate::database::Database;
 use crate::generator::{ByteGen, KVSizeGen};
 use anyhow::Result;
 use hdrhistogram::Histogram;
 use rand::prelude::SmallRng;
-use rand::{random, Rng, RngCore, SeedableRng};
+use rand::{Rng, RngCore, SeedableRng, random};
 use std::fmt::{Display, Formatter};
 use std::sync::Arc;
 use std::time::{Duration, Instant};
@@ -45,22 +45,30 @@ impl WorkloadStats {
 impl Display for WorkloadStats {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         let throughput = |ops: u64, d: Duration| -> f64 {
-            if ops == 0 || d.is_zero() { 0.0 } else { ops as f64 / d.as_secs_f64() }
+            if ops == 0 || d.is_zero() {
+                0.0
+            } else {
+                ops as f64 / d.as_secs_f64()
+            }
         };
         let percentile = |h: &Histogram<u64>, q: f64| -> String {
-            if h.is_empty() { "-".into() } else { h.value_at_quantile(q).separate_with_underscores() }
+            if h.is_empty() {
+                "-".into()
+            } else {
+                h.value_at_quantile(q).separate_with_underscores()
+            }
         };
 
         // reads
-        let r_p50  = percentile(&self.run_read_hist_micro_sec, 0.50);
-        let r_p95  = percentile(&self.run_read_hist_micro_sec, 0.95);
-        let r_p99  = percentile(&self.run_read_hist_micro_sec, 0.99);
+        let r_p50 = percentile(&self.run_read_hist_micro_sec, 0.50);
+        let r_p95 = percentile(&self.run_read_hist_micro_sec, 0.95);
+        let r_p99 = percentile(&self.run_read_hist_micro_sec, 0.99);
         let r_p999 = percentile(&self.run_read_hist_micro_sec, 0.999);
 
         // writes
-        let w_p50  = percentile(&self.run_write_hist_micro_sec, 0.50);
-        let w_p95  = percentile(&self.run_write_hist_micro_sec, 0.95);
-        let w_p99  = percentile(&self.run_write_hist_micro_sec, 0.99);
+        let w_p50 = percentile(&self.run_write_hist_micro_sec, 0.50);
+        let w_p95 = percentile(&self.run_write_hist_micro_sec, 0.95);
+        let w_p99 = percentile(&self.run_write_hist_micro_sec, 0.99);
         let w_p999 = percentile(&self.run_write_hist_micro_sec, 0.999);
 
         writeln!(f, "=== LOAD ===")?;
@@ -79,7 +87,10 @@ impl Display for WorkloadStats {
             self.run_read_ops.separate_with_underscores(),
             self.run_wall_time,
             (throughput(self.run_read_ops, self.run_read_time) as u64).separate_with_underscores(),
-            r_p50, r_p95, r_p99, r_p999
+            r_p50,
+            r_p95,
+            r_p99,
+            r_p999
         )?;
 
         writeln!(f, "=== RUN WRITE ===")?;
@@ -88,8 +99,12 @@ impl Display for WorkloadStats {
             "ops: {} | time: {:.1?} | throughput: {} ops/s | p50: {} µs | p95: {} µs | p99: {} µs | p99.9: {} µs",
             self.run_write_ops.separate_with_underscores(),
             self.run_wall_time,
-            (throughput(self.run_write_ops, self.run_write_time) as u64).separate_with_underscores(),
-            w_p50, w_p95, w_p99, w_p999
+            (throughput(self.run_write_ops, self.run_write_time) as u64)
+                .separate_with_underscores(),
+            w_p50,
+            w_p95,
+            w_p99,
+            w_p999
         )
     }
 }
@@ -119,9 +134,10 @@ pub trait Workload {
     fn init_stats(&self) -> Result<WorkloadStats> {
         WorkloadStats::new()
     }
-
     fn exec_load(&self, db: Arc<dyn Database>, stats: &mut WorkloadStats) -> Result<()>;
     fn exec_run(&self, db: Arc<dyn Database>, stats: &mut WorkloadStats) -> Result<()>;
+
+    fn get_name(&self) -> String;
 }
 
 impl<T: WorkloadConfig + Sync> Workload for T {
@@ -143,11 +159,9 @@ impl<T: WorkloadConfig + Sync> Workload for T {
         let mut write_hist = Histogram::<u64>::new_with_bounds(1, 10_000_000, 3)?;
         std::thread::scope(|s| {
             let mut handles = vec![];
-            let mut start_time = Instant::now();
+            let start_time = Instant::now();
             for _ in 0..self.get_thread_count() {
-                let h = s.spawn(|| {
-                    run(&db, self)
-                });
+                let h = s.spawn(|| run(&db, self));
                 handles.push(h);
             }
 
@@ -170,6 +184,10 @@ impl<T: WorkloadConfig + Sync> Workload for T {
         stats.run_read_hist_micro_sec = read_hist;
         stats.run_write_hist_micro_sec = write_hist;
         Ok(())
+    }
+
+    fn get_name(&self) -> String {
+        self.get_name()
     }
 }
 
@@ -222,7 +240,6 @@ fn run(db: &Arc<dyn Database>, config: &impl WorkloadConfig) -> Result<RunDurati
 
     let key_size = config.get_key_size();
 
-
     for _ in 0..config.get_operation_count() {
         let x: f64 = rng.random();
         let key_bytes = bytes_gen.get_key_bytes(key_size);
@@ -247,17 +264,41 @@ fn run(db: &Arc<dyn Database>, config: &impl WorkloadConfig) -> Result<RunDurati
         };
     }
 
-    Ok(RunDuration {read_duration, read_ops, read_hist, write_duration, write_ops, write_hist})
+    Ok(RunDuration {
+        read_duration,
+        read_ops,
+        read_hist,
+        write_duration,
+        write_ops,
+        write_hist,
+    })
 }
 
 fn validate_config(config: &impl WorkloadConfig) {
-    assert!(config.get_read_percent() >= 0.0, "Read percent must be larger than or equal to 0");
-    assert!(config.get_read_percent() <= 1.0, "Read percent must be less than or equal to 1");
+    assert!(
+        config.get_read_percent() >= 0.0,
+        "Read percent must be larger than or equal to 0"
+    );
+    assert!(
+        config.get_read_percent() <= 1.0,
+        "Read percent must be less than or equal to 1"
+    );
 
-    assert!(config.get_write_percent() >= 0.0, "Write percent must be larger than or equal to 0");
-    assert!(config.get_write_percent() <= 1.0, "Write percent must be less than or equal to 1");
+    assert!(
+        config.get_write_percent() >= 0.0,
+        "Write percent must be larger than or equal to 0"
+    );
+    assert!(
+        config.get_write_percent() <= 1.0,
+        "Write percent must be less than or equal to 1"
+    );
 
-    assert!(config.get_read_percent() + config.get_write_percent() > 0.0, "Read and write both cannot be zero percent");
-    assert!(config.get_read_percent() + config.get_write_percent() <= 1.0, "Read and write cannot not combine to above 1");
+    assert!(
+        config.get_read_percent() + config.get_write_percent() > 0.0,
+        "Read and write both cannot be zero percent"
+    );
+    assert!(
+        config.get_read_percent() + config.get_write_percent() <= 1.0,
+        "Read and write cannot not combine to above 1"
+    );
 }
-

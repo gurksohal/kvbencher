@@ -3,14 +3,14 @@ use tempfile::TempDir;
 
 pub struct Sled {
     db: sled::Db,
-    _f: TempDir
+    _f: TempDir,
 }
 
 impl Sled {
     pub fn new() -> Self {
         let f = TempDir::new().unwrap();
         let db = sled::open(f.path()).unwrap();
-        Sled {db, _f: f}
+        Sled { db, _f: f }
     }
 }
 impl Database for Sled {

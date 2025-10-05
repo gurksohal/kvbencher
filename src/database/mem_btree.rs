@@ -18,7 +18,10 @@ impl Database for MemBTree {
     }
 
     fn set(&self, key: &[u8], value: &[u8]) -> anyhow::Result<()> {
-        self.data.write().unwrap_or_else(|e| e.into_inner()).insert(Vec::from(key), Vec::from(value));
+        self.data
+            .write()
+            .unwrap_or_else(|e| e.into_inner())
+            .insert(Vec::from(key), Vec::from(value));
         Ok(())
     }
 }

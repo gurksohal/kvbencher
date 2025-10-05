@@ -1,10 +1,10 @@
 mod database;
-mod workload;
 mod generator;
+mod workload;
 
+use crate::WorkloadType::ReadWrite;
 use crate::database::get_db;
 use crate::workload::Workload;
-use crate::WorkloadType::ReadWrite;
 use anyhow::Result;
 use clap::{Parser, ValueEnum};
 
@@ -47,6 +47,12 @@ fn main() -> Result<()> {
     let mut stats = wl.init_stats()?;
     wl.exec_load(database.clone(), &mut stats)?;
     wl.exec_run(database, &mut stats)?;
+    println!(
+        "database: {}, workload: {}",
+        get_db_name(cli.database),
+        wl.get_name()
+    );
+    println!("==============================");
     println!("{}", stats);
     Ok(())
 }
@@ -57,5 +63,13 @@ fn get_wl(wl: WorkloadType) -> Box<dyn Workload> {
         WorkloadType::ReadHeavy => Box::new(workload::read_heavy::ReadHeavy),
         WorkloadType::ReadOnly => Box::new(workload::read_only::ReadOnly),
         WorkloadType::RangeScan => todo!(),
+    }
+}
+
+fn get_db_name(db: DatabaseType) -> String {
+    match db {
+        DatabaseType::MemBtree => "MemBtree".to_string(),
+        DatabaseType::Redb => "Redb".to_string(),
+        DatabaseType::Sled => "Sled".to_string(),
     }
 }

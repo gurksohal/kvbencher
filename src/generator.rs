@@ -17,7 +17,10 @@ pub struct ByteGen {
 impl KVSizeGen {
     pub fn new(range: u64, seed: u64) -> Result<Self> {
         let g = Zipf::new(range as f64, 1.0)?;
-        Ok(KVSizeGen { zipf: g, rng: SmallRng::seed_from_u64(seed) })
+        Ok(KVSizeGen {
+            zipf: g,
+            rng: SmallRng::seed_from_u64(seed),
+        })
     }
 
     pub fn get_size(&mut self) -> u64 {
@@ -28,7 +31,10 @@ impl KVSizeGen {
 impl ByteGen {
     pub fn new(range: u64, seed: u64) -> Result<Self> {
         let g = Zipf::new(range as f64, 1.0)?;
-        Ok(ByteGen { zipf: g, rng: SmallRng::seed_from_u64(seed) })
+        Ok(ByteGen {
+            zipf: g,
+            rng: SmallRng::seed_from_u64(seed),
+        })
     }
 
     pub fn get_key_bytes(&mut self, size: u64) -> Vec<u8> {
