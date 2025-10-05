@@ -251,7 +251,7 @@ fn run(db: &Arc<dyn Database>, config: &impl WorkloadConfig) -> Result<RunDurati
             read_hist.record(mirco_sec.as_micros() as u64)?;
             read_ops += 1;
         } else if x < config.get_read_percent() + config.get_write_percent() {
-            let value_size = value_size_gen.get_size();
+            let value_size = value_size_gen.get_size() + v_r.start;
             let value_bytes = bytes_gen.get_value_bytes(value_size);
             let start = Instant::now();
             db.set(key_bytes.as_slice(), value_bytes.as_slice())?;

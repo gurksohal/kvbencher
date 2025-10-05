@@ -22,7 +22,7 @@ impl WorkloadConfig for ReadHeavy {
     }
 
     fn get_write_percent(&self) -> f64 {
-        0.5
+        0.05
     }
 
     fn get_key_size(&self) -> u64 {
