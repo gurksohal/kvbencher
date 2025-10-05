@@ -10,11 +10,11 @@ impl WorkloadConfig for ReadWrite {
     }
 
     fn get_load_phase_insert_count(&self) -> u64 {
-        1_000_000
+        10_000
     }
 
     fn get_operation_count(&self) -> u64 {
-        100_000
+        5_000
     }
 
     fn get_read_percent(&self) -> f64 {

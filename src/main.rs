@@ -17,9 +17,6 @@ struct Cli {
     #[arg(value_enum)]
     database: DatabaseType,
 
-    #[arg(short = 't', default_value = "1")]
-    threads: u64,
-
     /// Optional properties
     #[arg(short = 'p')]
     properties: Option<String>,
@@ -41,9 +38,9 @@ enum DatabaseType {
 }
 
 fn main() -> Result<()> {
-    //let cli = Cli::parse();
-    let workload = ReadWrite;
-    let database = get_db(DatabaseType::Redb)?;
+    let cli = Cli::parse();
+    let workload = cli.workload;
+    let database = get_db(cli.database)?;
 
     let wl = get_wl(workload);
     let mut stats = wl.init_stats()?;

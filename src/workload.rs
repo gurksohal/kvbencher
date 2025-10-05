@@ -1,14 +1,14 @@
 pub mod read_write;
 
-use std::fmt::{Display, Formatter};
 use crate::database::Database;
 use crate::generator::{ByteGen, KVSizeGen};
 use anyhow::Result;
+use hdrhistogram::Histogram;
 use rand::prelude::SmallRng;
 use rand::{random, Rng, RngCore, SeedableRng};
+use std::fmt::{Display, Formatter};
 use std::sync::Arc;
 use std::time::{Duration, Instant};
-use hdrhistogram::Histogram;
 use thousands::Separable;
 
 #[derive(Debug)]
@@ -175,15 +175,17 @@ fn load(db: &Arc<dyn Database>, config: &impl WorkloadConfig) -> Result<Duration
     let mut time = Duration::ZERO;
     let v_r = config.get_value_size_range();
     let mut value_size_gen = KVSizeGen::new(v_r.end - v_r.start, random())?;
-    for i in 0..config.get_load_phase_insert_count() {
-        let key_size = config.get_key_size();
-        let value_size = value_size_gen.get_size() + v_r.start;
 
-        let mut key_bytes = vec![0u8; key_size as usize];
+    let key_size = config.get_key_size();
+    let mut key_bytes = vec![0u8; key_size as usize];
+
+    for i in 0..config.get_load_phase_insert_count() {
+        let value_size = value_size_gen.get_size() + v_r.start;
         let mut value_bytes = vec![0u8; value_size as usize];
 
-        SmallRng::seed_from_u64(i).fill_bytes(&mut key_bytes[..]);
-        SmallRng::seed_from_u64(i).fill_bytes(&mut value_bytes[..]);
+        let mut rng = SmallRng::seed_from_u64(i);
+        rng.fill_bytes(&mut key_bytes);
+        rng.fill_bytes(&mut value_bytes);
 
         let s = Instant::now();
         db.set(key_bytes.as_slice(), value_bytes.as_slice())?;
@@ -216,11 +218,12 @@ fn run(db: &Arc<dyn Database>, config: &impl WorkloadConfig) -> Result<RunDurati
     let mut bytes_gen = ByteGen::new(config.get_load_phase_insert_count(), random())?;
     let mut rng = rand::rng();
 
+    let key_size = config.get_key_size();
+
+
     for _ in 0..config.get_operation_count() {
         let x: f64 = rng.random();
-        let key_size = config.get_key_size();
         let key_bytes = bytes_gen.get_key_bytes(key_size);
-
         if x < config.get_read_percent() {
             let start = Instant::now();
             db.get(key_bytes.as_slice())?;
